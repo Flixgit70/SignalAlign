@@ -18,3 +18,5 @@ compile_commands.json
 *.xcuserstate
 xcuserdata/
 /Source.zip
+/build_linux/
+/build_win/
