@@ -1,0 +1,22 @@
+SignalAlign next-release patch based on Source(20261107-100316).zip
+
+Changed code:
+- Source/PluginEditor.cpp
+- Source/PluginEditor.h
+
+Unchanged DSP/processor files:
+- AnalysisEngine.cpp/.h
+- AnalysisTypes.h
+- PluginProcessor.cpp/.h
+
+UI/documentation changes:
+- COMISRatio-style dark popup/help colours
+- K2consulting About window with K2 logo, developer/email, version and build framework info
+- permanent Online Manual URL
+- Third-Party Licenses window (JUCE link + VST 3 SDK 3.8.0 MIT notice)
+- parameter interaction explanations in Help
+- SEARCH tooltip explains effective range vs FFT/sample rate and analysis cost
+- updated English manual in DOCX and PDF
+- THIRD_PARTY_NOTICES.md for repository/distribution
+
+Product seat/demo licensing is NOT added by this patch.

@@ -23,6 +23,240 @@ const juce::Colour delayRed = juce::Colour::fromRGB(255, 40, 40);
 const juce::Colour buttonBackground = juce::Colour::fromRGB(70, 70, 70);
 const juce::Colour moduleOutline = uiText.withAlpha(0.34f);
 
+
+const juce::String manualUrl = "https://nc-5789769951021120545.nextcloud-ionos.com/index.php/s/WHckLHmraP5fd7b?dir=/&editing=false&openfile=true";
+const juce::String juceLicenceUrl = "https://juce.com/legal/juce-8-licence/";
+const juce::String vst3LicenceUrl = "https://steinbergmedia.github.io/vst3_dev_portal/pages/VST%2B3%2BLicensing/VST3%2BLicense";
+
+void styleDialogButton(juce::TextButton& button, juce::Colour fill = panelRaised)
+{
+    button.setColour(juce::TextButton::buttonColourId, fill);
+    button.setColour(juce::TextButton::buttonOnColourId, primaryBlue);
+    button.setColour(juce::TextButton::textColourOffId, uiText);
+    button.setColour(juce::TextButton::textColourOnId, juce::Colours::black);
+    button.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+}
+
+void showThirdPartyLicencesWindow();
+
+class SignalAlignAboutComponent final : public juce::Component
+{
+public:
+    explicit SignalAlignAboutComponent(juce::Image logo)
+        : logoImage(std::move(logo))
+    {
+        setSize(470, 555);
+        setOpaque(false);
+
+        manualButton.setButtonText("User Manual (Online)");
+        thirdPartyButton.setButtonText("Third-Party Licenses");
+        okButton.setButtonText("OK");
+
+        styleDialogButton(manualButton);
+        styleDialogButton(thirdPartyButton);
+        styleDialogButton(okButton);
+
+        manualButton.onClick = [] { juce::URL(manualUrl).launchInDefaultBrowser(); };
+        thirdPartyButton.onClick = [] { showThirdPartyLicencesWindow(); };
+        okButton.onClick = [this]
+        {
+            if (auto* dialog = findParentComponentOfClass<juce::DialogWindow>())
+                dialog->exitModalState(0);
+        };
+
+        addAndMakeVisible(manualButton);
+        addAndMakeVisible(thirdPartyButton);
+        addAndMakeVisible(okButton);
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        const auto bounds = getLocalBounds().toFloat().reduced(7.0f);
+
+        g.setColour(juce::Colours::black.withAlpha(0.32f));
+        g.fillRoundedRectangle(bounds.translated(4.0f, 5.0f), 18.0f);
+
+        g.setColour(bg);
+        g.fillRoundedRectangle(bounds, 18.0f);
+
+        g.setColour(moduleOutline.brighter(0.3f));
+        g.drawRoundedRectangle(bounds, 18.0f, 1.5f);
+
+        if (logoImage.isValid())
+            g.drawImageWithin(logoImage, 70, 28, 92, 92,
+                              juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize, false);
+
+        g.setColour(juce::Colour::fromRGB(255, 145, 0));
+        g.setFont(juce::Font(juce::FontOptions(30.0f)).boldened());
+        g.drawText("Consulting", 160, 45, 240, 58, juce::Justification::centredLeft);
+
+        g.setColour(juce::Colours::white);
+        g.setFont(juce::Font(juce::FontOptions(25.0f)).boldened());
+        g.drawText(juce::String(JucePlugin_Name), 45, 145, 380, 34, juce::Justification::centred);
+
+        g.setColour(primaryBlue.brighter(0.15f));
+        g.setFont(juce::Font(juce::FontOptions(15.0f)).boldened());
+        g.drawText("Version " + juce::String(JucePlugin_VersionString), 45, 184, 380, 24, juce::Justification::centred);
+
+        g.setColour(juce::Colours::white.withAlpha(0.92f));
+        g.setFont(juce::Font(juce::FontOptions(14.0f)));
+        g.drawText("Developed by Felix Krueckels", 45, 225, 380, 22, juce::Justification::centred);
+        g.drawText("fkrueckels@gmail.com", 45, 250, 380, 22, juce::Justification::centred);
+
+#if SIGNALALIGN_16_INPUT
+        const juce::String variantText = "16-input analyser | Input 1 = REFERENCE | selected Input 2-16 = COMPARE";
+#else
+        const juce::String variantText = "Dual-channel delay, coherence and phase analyser";
+#endif
+        g.setColour(uiText.withAlpha(0.84f));
+        g.setFont(juce::Font(juce::FontOptions(11.0f)));
+        g.drawFittedText(variantText, 55, 287, 360, 30, juce::Justification::centred, 2);
+
+        g.setColour(juce::Colours::white.withAlpha(0.62f));
+        g.setFont(juce::Font(juce::FontOptions(10.5f)));
+        g.drawFittedText(juce::SystemStats::getJUCEVersion()
+                         + "  |  Steinberg VST 3 SDK 3.8.0",
+                         45, 326, 380, 24, juce::Justification::centred, 1);
+
+        g.setColour(dimText.withAlpha(0.70f));
+        g.setFont(juce::Font(juce::FontOptions(9.5f)));
+        g.drawFittedText("Copyright 2026 Felix Krueckels / K2consulting. Third-party notices are available below.",
+                         45, 358, 380, 32, juce::Justification::centred, 2);
+    }
+
+    void resized() override
+    {
+        manualButton.setBounds(92, 404, getWidth() - 184, 36);
+        thirdPartyButton.setBounds(92, 451, getWidth() - 184, 36);
+        okButton.setBounds(getWidth() / 2 - 52, getHeight() - 54, 104, 32);
+    }
+
+private:
+    juce::Image logoImage;
+    juce::TextButton manualButton;
+    juce::TextButton thirdPartyButton;
+    juce::TextButton okButton;
+};
+
+class ThirdPartyLicencesComponent final : public juce::Component
+{
+public:
+    ThirdPartyLicencesComponent()
+    {
+        setSize(680, 560);
+        setOpaque(false);
+
+        notices.setMultiLine(true);
+        notices.setReadOnly(true);
+        notices.setScrollbarsShown(true);
+        notices.setCaretVisible(false);
+        notices.setColour(juce::TextEditor::backgroundColourId, panel);
+        notices.setColour(juce::TextEditor::textColourId, uiText);
+        notices.setColour(juce::TextEditor::outlineColourId, grid);
+        notices.setColour(juce::TextEditor::focusedOutlineColourId, primaryBlue);
+        notices.setFont(juce::Font(juce::FontOptions(12.0f)));
+        notices.setText(
+            "SIGNALIGN - THIRD-PARTY / OPEN-SOURCE NOTICES\n\n"
+            "JUCE 8 Framework\n"
+            "Copyright (c) Raw Material Software Limited.\n"
+            "SignalAlign uses JUCE under the JUCE licence applicable to K2consulting's build/distribution.\n"
+            "Full current JUCE 8 licence terms: juce.com/legal/juce-8-licence/\n\n"
+            "Steinberg VST 3 SDK 3.8.0\n"
+            "MIT License\n"
+            "Copyright (c) 2025 Steinberg Media Technologies GmbH\n\n"
+            "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the Software), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\n"
+            "The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\n"
+            "THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n"
+            "VST is a trademark of Steinberg Media Technologies GmbH. Use of the VST name/logo is subject to Steinberg's usage guidelines.");
+
+        juceLicenceButton.setButtonText("JUCE License");
+        vst3LicenceButton.setButtonText("VST 3 License");
+        okButton.setButtonText("OK");
+        styleDialogButton(juceLicenceButton);
+        styleDialogButton(vst3LicenceButton);
+        styleDialogButton(okButton);
+
+        juceLicenceButton.onClick = [] { juce::URL(juceLicenceUrl).launchInDefaultBrowser(); };
+        vst3LicenceButton.onClick = [] { juce::URL(vst3LicenceUrl).launchInDefaultBrowser(); };
+        okButton.onClick = [this]
+        {
+            if (auto* dialog = findParentComponentOfClass<juce::DialogWindow>())
+                dialog->exitModalState(0);
+        };
+
+        addAndMakeVisible(notices);
+        addAndMakeVisible(juceLicenceButton);
+        addAndMakeVisible(vst3LicenceButton);
+        addAndMakeVisible(okButton);
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        const auto bounds = getLocalBounds().toFloat().reduced(7.0f);
+        g.setColour(juce::Colours::black.withAlpha(0.32f));
+        g.fillRoundedRectangle(bounds.translated(4.0f, 5.0f), 18.0f);
+        g.setColour(bg);
+        g.fillRoundedRectangle(bounds, 18.0f);
+        g.setColour(moduleOutline.brighter(0.3f));
+        g.drawRoundedRectangle(bounds, 18.0f, 1.5f);
+
+        g.setColour(primaryBlue.brighter(0.15f));
+        g.setFont(juce::Font(juce::FontOptions(18.0f)).boldened());
+        g.drawText("Third-Party Licenses", 24, 18, getWidth() - 48, 28, juce::Justification::centred);
+    }
+
+    void resized() override
+    {
+        notices.setBounds(28, 56, getWidth() - 56, getHeight() - 132);
+        const int y = getHeight() - 60;
+        juceLicenceButton.setBounds(28, y, 146, 32);
+        vst3LicenceButton.setBounds(184, y, 146, 32);
+        okButton.setBounds(getWidth() - 132, y, 104, 32);
+    }
+
+private:
+    juce::TextEditor notices;
+    juce::TextButton juceLicenceButton;
+    juce::TextButton vst3LicenceButton;
+    juce::TextButton okButton;
+};
+
+void showThirdPartyLicencesWindow()
+{
+    juce::DialogWindow::LaunchOptions options;
+    options.dialogTitle = "";
+    options.dialogBackgroundColour = juce::Colours::transparentBlack;
+    options.escapeKeyTriggersCloseButton = true;
+    options.useNativeTitleBar = false;
+    options.resizable = false;
+    options.content.setOwned(new ThirdPartyLicencesComponent());
+
+    if (auto* window = options.launchAsync())
+    {
+        window->setOpaque(false);
+        window->setUsingNativeTitleBar(false);
+        window->setDropShadowEnabled(true);
+    }
+}
+
+void showSignalAlignAboutWindow(juce::Image logo)
+{
+    juce::DialogWindow::LaunchOptions options;
+    options.dialogTitle = "";
+    options.dialogBackgroundColour = juce::Colours::transparentBlack;
+    options.escapeKeyTriggersCloseButton = true;
+    options.useNativeTitleBar = false;
+    options.resizable = false;
+    options.content.setOwned(new SignalAlignAboutComponent(std::move(logo)));
+
+    if (auto* window = options.launchAsync())
+    {
+        window->setOpaque(false);
+        window->setUsingNativeTitleBar(false);
+        window->setDropShadowEnabled(true);
+    }
+}
+
 #if SIGNALALIGN_16_INPUT
 class CompareRoundButton final : public juce::Button
 {
@@ -251,6 +485,26 @@ SignalAlignAudioProcessorEditor::SignalAlignAudioProcessorEditor(SignalAlignAudi
     setResizable(true, true);
     setResizeLimits(700, 560, 2200, 1500);
 
+    // Keep all pop-up menus, tooltips and JUCE-owned chrome in the same
+    // COMISRatio-derived colour language as the plug-in itself.
+    pluginLookAndFeel.setColour(juce::PopupMenu::backgroundColourId, bg);
+    pluginLookAndFeel.setColour(juce::PopupMenu::textColourId, uiText);
+    pluginLookAndFeel.setColour(juce::PopupMenu::headerTextColourId, primaryBlue);
+    pluginLookAndFeel.setColour(juce::PopupMenu::highlightedBackgroundColourId, juce::Colour::fromRGB(0, 70, 220));
+    pluginLookAndFeel.setColour(juce::PopupMenu::highlightedTextColourId, juce::Colours::white);
+    pluginLookAndFeel.setColour(juce::TooltipWindow::backgroundColourId, panel);
+    pluginLookAndFeel.setColour(juce::TooltipWindow::textColourId, uiText);
+    pluginLookAndFeel.setColour(juce::TooltipWindow::outlineColourId, grid);
+    pluginLookAndFeel.setColour(juce::AlertWindow::backgroundColourId, bg);
+    pluginLookAndFeel.setColour(juce::AlertWindow::textColourId, uiText);
+    pluginLookAndFeel.setColour(juce::AlertWindow::outlineColourId, primaryBlue.withAlpha(0.55f));
+    pluginLookAndFeel.setColour(juce::ResizableWindow::backgroundColourId, bg);
+    pluginLookAndFeel.setColour(juce::ScrollBar::backgroundColourId, panel);
+    pluginLookAndFeel.setColour(juce::ScrollBar::thumbColourId, buttonBackground);
+    pluginLookAndFeel.setColour(juce::TextEditor::highlightColourId, primaryBlue.withAlpha(0.65f));
+    pluginLookAndFeel.setColour(juce::TextEditor::highlightedTextColourId, juce::Colours::black);
+    setLookAndFeel(&pluginLookAndFeel);
+
     companyLogo = juce::ImageFileFormat::loadFrom(
         BinaryData::K2_logo_png,
         BinaryData::K2_logo_pngSize);
@@ -316,7 +570,7 @@ SignalAlignAudioProcessorEditor::SignalAlignAudioProcessorEditor(SignalAlignAudi
     logoButton.setColour(juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
     logoButton.setColour(juce::TextButton::textColourOnId, juce::Colours::transparentBlack);
     logoButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
-    logoButton.setTooltip("Click the K2 logo / SignalAlign wordmark for parameter help");
+    logoButton.setTooltip("Click K2 / SignalAlign for Help, Manual, About and licenses");
     logoButton.onClick = [this] { showHelpMenu(); };
 
     addAndMakeVisible(settingsToggleButton);
@@ -410,6 +664,11 @@ SignalAlignAudioProcessorEditor::SignalAlignAudioProcessorEditor(SignalAlignAudi
     startTimerHz(30);
 }
 
+SignalAlignAudioProcessorEditor::~SignalAlignAudioProcessorEditor()
+{
+    setLookAndFeel(nullptr);
+}
+
 void SignalAlignAudioProcessorEditor::updateSettingsVisibility()
 {
     settingsToggleButton.setButtonText(settingsVisible ? "HIDE SETTINGS" : "SHOW SETTINGS");
@@ -490,6 +749,23 @@ void SignalAlignAudioProcessorEditor::updateFftSizeTooltip()
     }
 
     fftSizeBox.setTooltip(info);
+
+    if (sampleRate > 1.0)
+    {
+        const auto fftIndex = juce::jlimit(0, 6, fftSizeBox.getSelectedItemIndex());
+        static constexpr int fftSizes[] { 2048, 4096, 8192, 16384, 32768, 65536, 131072 };
+        const auto fftLimitMs = 1000.0 * (static_cast<double>(fftSizes[fftIndex]) * 0.5 - 2.0) / sampleRate;
+        searchBox.setTooltip(
+            "SEARCH limits which GCC lag candidates are considered. It does not change the FFT window or wait for more audio.\n"
+            "Effective range is the smaller of SEARCH and the FFT/sample-rate limit. With the current FFT this limit is +/-"
+            + juce::String(fftLimitMs, 1) + " ms.\n"
+            "A wider SEARCH adds only a small peak-scan cost, but can expose more competing peaks and reduce ambiguity robustness.");
+    }
+    else
+    {
+        searchBox.setTooltip(
+            "SEARCH limits which GCC lag candidates are considered. Effective range is the smaller of SEARCH and the FFT/sample-rate limit.");
+    }
 }
 
 #if SIGNALALIGN_16_INPUT
@@ -525,13 +801,26 @@ void SignalAlignAudioProcessorEditor::showHelpMenu()
 {
     juce::PopupMenu analysisMenu;
     analysisMenu.addSectionHeader("Spectral analysis");
-    analysisMenu.addItem(101, "FFT Size: frequency resolution and analysis window length");
-    analysisMenu.addItem(102, "Overlap: how much consecutive FFT windows overlap");
-    analysisMenu.addItem(103, "Averaging: smoothing of coherence and phase spectra");
-    analysisMenu.addItem(104, "Low / High: frequency band used for delay evaluation");
-    analysisMenu.addItem(105, "Search: maximum +/- delay range searched by Generalized Cross-Correlation with Phase Transform (GCC-PHAT)");
-    analysisMenu.addItem(106, "Smooth: time smoothing after a delay frame has passed all quality checks");
+    analysisMenu.addItem(101, "FFT Size: frequency resolution, analysis-window length and maximum unambiguous lag");
+    analysisMenu.addItem(102, "Overlap: together with FFT Size it sets the hop size / measurement update interval");
+    analysisMenu.addItem(103, "Averaging: per-frame smoothing of coherence and phase; its real-time speed therefore also depends on FFT Size and Overlap");
+    analysisMenu.addItem(104, "Low / High: frequency band used for delay evaluation; narrower bands contain less unique timing information");
+    analysisMenu.addItem(105, "Search: maximum +/- GCC-PHAT lag considered; effective range = min(SEARCH, FFT/sample-rate limit)");
+    analysisMenu.addItem(106, "Smooth: output/display time constant after a delay frame has passed all quality checks");
     analysisMenu.addItem(107, "FFT Size hover: shows the maximum unambiguous GCC delay for every FFT size at the current host sample rate");
+
+    juce::PopupMenu dependencyMenu;
+    dependencyMenu.addSectionHeader("Parameter interactions");
+    dependencyMenu.addItem(171, "FFT Size + sample rate define maximum measurable lag; SEARCH cannot exceed that limit");
+    dependencyMenu.addItem(172, "FFT Size + Overlap define hop size: larger FFT updates more slowly; more Overlap updates more often and costs more CPU");
+    dependencyMenu.addItem(173, "Averaging is applied per analysis frame, so its real-time settling speed changes with FFT Size / Overlap");
+    dependencyMenu.addItem(174, "SEARCH does not make the FFT wait longer; a wider range mainly considers more candidate peaks and may increase ambiguity");
+    dependencyMenu.addItem(175, "Low/High determine usable bandwidth; narrower bandwidth increases correlation-peak width and can make periodic material less unique");
+    dependencyMenu.addItem(176, "Min Confidence is a composite score that already contains Coherence, Peak Ratio and supporting checks; explicit gates apply in addition");
+    dependencyMenu.addItem(177, "Max Phase Diff = 0 disables the hard gate; when enabled it is only applied to a reliable Phase Fit at sufficiently high coherence");
+    dependencyMenu.addItem(178, "Max Stability = 0 disables the hard gate; when enabled Stability also contributes to the composite Confidence score");
+    dependencyMenu.addItem(179, "Smooth affects only accepted output/display delay; it does not improve an ambiguous raw measurement");
+    dependencyMenu.addItem(180, "Changing FFT Size resets averaging, delay smoothing, continuity and stability history; changing COMPARE in SignalAlign 16 also reacquires from scratch");
 
     juce::PopupMenu robustMenu;
     robustMenu.addSectionHeader("Robust delay logic");
@@ -569,49 +858,52 @@ void SignalAlignAudioProcessorEditor::showHelpMenu()
     displayMenu.addItem(307, "FREEZE: holds the current analysis display");
 #if SIGNALALIGN_16_INPUT
     displayMenu.addItem(308, "REFERENCE = Input 1; COMPARE = exactly one selected input from Inputs 2-16");
-    displayMenu.addItem(315, "COMPARE selector: 15 round buttons select exactly one of Inputs 2-16; changing input resets analysis history and reacquires the delay");
+    displayMenu.addItem(315, "COMPARE selector: changing input resets analysis history and reacquires the delay");
 #else
     displayMenu.addItem(308, "REFERENCE = left input channel, COMPARE = right input channel");
 #endif
     displayMenu.addItem(309, "Alignment Bar: signed delay around 0 ms; right-click sets green/red limits");
-    displayMenu.addItem(310, "SHOW/HIDE SETTINGS: shows the day-to-day controls (FFT, Search, Smooth, Low/High and Freeze)");
-    displayMenu.addItem(316, "ADVANCED: shows Overlap, Averaging and the quality / robustness gates");
+    displayMenu.addItem(310, "SHOW/HIDE SETTINGS: day-to-day controls (FFT, Search, Smooth, Low/High and Freeze)");
+    displayMenu.addItem(316, "ADVANCED: Overlap, Averaging and quality / robustness gates");
     displayMenu.addItem(311, "Responsive GUI: controls reflow in narrow windows and plots expand with available space");
     displayMenu.addItem(312, "Last Valid: if no current delay qualifies, the last valid delay remains visible in grey");
-    displayMenu.addItem(313, "Correction arrows: large green right arrow = increase delay, large red left arrow = reduce delay; REFERENCE and COMPARE always show opposite corrections");
-    displayMenu.addItem(314, "Display precision: right-click the Samples or ms readout to choose 0-4 decimal places");
+    displayMenu.addItem(313, "Correction arrows: green right = increase delay, red left = reduce delay; REFERENCE and COMPARE show opposite corrections");
+    displayMenu.addItem(314, "Display precision: right-click Samples or ms to choose 0-4 decimal places");
 
     juce::PopupMenu menu;
+
+    // PopupMenu is not a Component and may otherwise fall back to JUCE's
+    // default LookAndFeel. Assign our COMISRatio-derived LookAndFeel explicitly
+    // so the top-level menu and all submenus use the same dark palette.
+    analysisMenu.setLookAndFeel(&pluginLookAndFeel);
+    dependencyMenu.setLookAndFeel(&pluginLookAndFeel);
+    robustMenu.setLookAndFeel(&pluginLookAndFeel);
+    qualityMenu.setLookAndFeel(&pluginLookAndFeel);
+    displayMenu.setLookAndFeel(&pluginLookAndFeel);
+    menu.setLookAndFeel(&pluginLookAndFeel);
+
     const auto versionString = juce::String(JucePlugin_VersionString);
     menu.addSectionHeader(juce::String(JucePlugin_Name) + " " + versionString + " ROBUST - Help");
     menu.addSubMenu("Analysis parameters", analysisMenu);
+    menu.addSubMenu("Parameter interactions", dependencyMenu);
     menu.addSubMenu("Robust delay logic", robustMenu);
     menu.addSubMenu("Quality / validity", qualityMenu);
     menu.addSubMenu("Display / controls", displayMenu);
     menu.addSeparator();
     menu.addItem(403, "About " + juce::String(JucePlugin_Name) + "...");
     menu.addItem(402, "Open Manual...");
+    menu.addItem(404, "Third-Party Licenses...");
     menu.addItem(401, "Measurement only: audio passes through unchanged");
 
     menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&logoButton),
-                       [versionString](int result)
+                       [this](int result)
                        {
                            if (result == 402)
-                           {
-                               juce::URL("https://ogy.de/l6xz").launchInDefaultBrowser();
-                           }
+                               juce::URL(manualUrl).launchInDefaultBrowser();
                            else if (result == 403)
-                           {
-                               juce::AlertWindow::showMessageBoxAsync(
-                                   juce::MessageBoxIconType::InfoIcon,
-                                   "About " + juce::String(JucePlugin_Name),
-                                   juce::String(JucePlugin_Name) + "\nVersion " + versionString
-#if SIGNALALIGN_16_INPUT
-                                       + "\n\n16-input analyser: Input 1 is REFERENCE, one of Inputs 2-16 is the selected COMPARE.");
-#else
-                                       + "\n\nRobust dual-channel coherence, phase and time-alignment analyser.");
-#endif
-                           }
+                               showSignalAlignAboutWindow(companyLogo);
+                           else if (result == 404)
+                               showThirdPartyLicencesWindow();
                        });
 }
 
@@ -1135,6 +1427,7 @@ void SignalAlignAudioProcessorEditor::showPrecisionMenu(const juce::String& para
     const auto current = juce::jlimit(0, 4, static_cast<int>(std::lround(parameter->convertFrom0to1(parameter->getValue()))));
 
     juce::PopupMenu menu;
+    menu.setLookAndFeel(&pluginLookAndFeel);
     menu.addSectionHeader(title);
     for (int decimals = 0; decimals <= 4; ++decimals)
     {

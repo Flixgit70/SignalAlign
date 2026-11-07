@@ -24,7 +24,7 @@ if ! command -v ninja >/dev/null 2>&1; then
     GENERATOR="Unix Makefiles"
 fi
 
-echo "SignalAlign 0.2.27 / SignalAlign 16"
+echo "SignalAlign 0.2.28 / SignalAlign 16"
 echo "Project: $PROJECT_DIR"
 echo "JUCE:    $JUCE_PATH"
 echo "Build:   $PROJECT_DIR/build"

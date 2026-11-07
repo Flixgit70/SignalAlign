@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(SignalAlign VERSION 0.2.27)
+project(SignalAlign VERSION 0.2.28)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,7 +35,7 @@ else()
 endif()
 
 juce_add_plugin(SignalAlign
-    VERSION 0.2.27
+    VERSION 0.2.28
     COMPANY_NAME "SignalAlign"
     BUNDLE_ID "de.felixkruckels.signalalign"
     PLUGIN_MANUFACTURER_CODE Fkrk
@@ -96,7 +96,7 @@ target_link_libraries(SignalAlign PRIVATE
 # The original stereo SignalAlign target remains unchanged and can coexist with it.
 # -----------------------------------------------------------------------------
 juce_add_plugin(SignalAlign16
-    VERSION 0.2.27
+    VERSION 0.2.28
     COMPANY_NAME "SignalAlign"
     BUNDLE_ID "de.felixkruckels.signalalign16"
     PLUGIN_MANUFACTURER_CODE Fkrk

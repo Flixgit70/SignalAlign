@@ -1,4 +1,4 @@
-# SignalAlign 0.2.27 ROBUST
+# SignalAlign 0.2.28 ROBUST
 
 SignalAlign compares two audio signals in REAPER/JUCE:
 
@@ -8,7 +8,7 @@ SignalAlign compares two audio signals in REAPER/JUCE:
 
 This version is based on the stable pre-multiband code path. The failed 0.2.0 multiband majority-vote architecture is **not** used.
 
-## 0.2.27 - Settings / Advanced split + new defaults
+## 0.2.28 - Settings / Advanced split + new defaults
 
 - Normal SETTINGS now shows only FFT Size, Search, Smooth, Low/High analysis band and Freeze.
 - ADVANCED exposes Overlap, Averaging, Min Confidence, Min Coherence, Min Peak Ratio, Max Phase Diff and Max Stability.

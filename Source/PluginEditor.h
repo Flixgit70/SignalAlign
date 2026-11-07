@@ -8,7 +8,7 @@ class SignalAlignAudioProcessorEditor final : public juce::AudioProcessorEditor,
 {
 public:
     explicit SignalAlignAudioProcessorEditor(SignalAlignAudioProcessor&);
-    ~SignalAlignAudioProcessorEditor() override = default;
+    ~SignalAlignAudioProcessorEditor() override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -33,6 +33,7 @@ private:
     float frequencyToX(float frequency, juce::Rectangle<float> bounds) const;
 
     SignalAlignAudioProcessor& audioProcessor;
+    juce::LookAndFeel_V4 pluginLookAndFeel;
     juce::TooltipWindow tooltipWindow;
     double lastTooltipSampleRate = -1.0;
     signalalign::AnalysisSnapshot latest;
